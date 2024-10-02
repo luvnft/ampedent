@@ -1,20 +1,22 @@
-import mongoose from 'mongoose'
+import { createClient } from '@supabase/supabase-js';
+
 declare global {
-  var mongoose: any
+  var supabase: any
 }
 
-const MONGODB_URI = process.env.MONGODB_URI!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!MONGODB_URI) {
+if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local',
+    'Please define the NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables inside .env.local'
   )
 }
 
-let cached = global.mongoose
+let cached = global.supabase
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null }
+  cached = global.supabase = { conn: null, promise: null }
 }
 
 async function dbConnect() {
@@ -22,11 +24,8 @@ async function dbConnect() {
     return cached.conn
   }
   if (!cached.promise) {
-    const opts = {
-      bufferCommands: false,
-    }
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then(mongoose => {
-      return mongoose
+    cached.promise = createClient(supabaseUrl, supabaseAnonKey).then(supabase => {
+      return supabase
     })
   }
   try {
